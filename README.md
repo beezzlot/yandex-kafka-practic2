@@ -148,6 +148,9 @@ cd <project-directory>
 ### Шаг 2: Запуск инфраструктуры
 
 ```bash
+# Создание Docker-сети
+docker network create -d bridge --subnet=10.80.80.0/24 --gateway=10.80.80.1  kafka-internal
+
 # Запуск сервисов Kafka
 docker compose -f docker-compose-kafka.yml up -d
 
