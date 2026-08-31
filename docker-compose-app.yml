@@ -1,0 +1,46 @@
+version: '3.8'
+
+
+networks:
+  kafka-internal:
+    external: true
+
+volumes:
+  faust-state:
+    driver: local
+
+services:
+  init-topics:
+    image: confluentinc/cp-kafka:8.3.1
+    container_name: faust-init-topics
+    restart: "no"
+    networks:
+      - kafka-internal
+    environment:
+      KAFKA_BOOTSTRAP_SERVER: kafka1:9092
+      PARTITIONS: "8"
+      REPLICATION_FACTOR: "3"
+    volumes:
+      - ./init-kafka-topics.sh:/init-kafka-topics.sh:ro
+    entrypoint: ["/bin/bash", "/init-kafka-topics.sh"]
+
+  faust-app:
+    container_name: faust-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - kafka-internal
+    environment:
+      - KAFKA_BROKER=${KAFKA_BROKER:-kafka1:9092}
+      - FAUST_STORE=rocksdb://
+    volumes:
+      - ./app:/app
+      - faust-state:/var/lib/faust/state
+    command: >
+      faust -A app worker
+      -l info
+      --web-port=8080
+    ports:
+      - "8081:8080"
+    restart: unless-stopped

@@ -1,0 +1,94 @@
+{
+  "blocked_users": [
+    {
+      "user_id": "alice",
+      "blocked_user_id": "spammer",
+      "timestamp": 1725091200.0
+    },
+    {
+      "user_id": "bob",
+      "blocked_user_id": "troll",
+      "timestamp": 1725091200.0
+    }
+  ],
+  "censored_words": [
+    {
+      "word": "spam",
+      "replacement": "***",
+      "is_active": true
+    },
+    {
+      "word": "badword",
+      "replacement": "[CENSORED]",
+      "is_active": true
+    },
+    {
+      "word": "scam",
+      "replacement": "S***",
+      "is_active": true
+    },
+    {
+      "word": "very badword",
+      "replacement": "[FULL CENSORED]",
+      "is_active": true
+    }
+  ],
+  "test_messages": [
+    {
+      "message_id": "msg-001",
+      "sender_id": "alice",
+      "receiver_id": "bob",
+      "content": "Привет! Как дела?",
+      "timestamp": 1725091300.0,
+      "description": "Обычное сообщение - должно пройти без изменений"
+    },
+    {
+      "message_id": "msg-002",
+      "sender_id": "spammer",
+      "receiver_id": "alice",
+      "content": "Купи мой товар! Это не spam!",
+      "timestamp": 1725091400.0,
+      "description": "Сообщение от заблокированного пользователя - должно быть заблокировано"
+    },
+    {
+      "message_id": "msg-003",
+      "sender_id": "charlie",
+      "receiver_id": "alice",
+      "content": "Это spam сообщение с badword словом",
+      "timestamp": 1725091500.0,
+      "description": "Сообщение с запрещёнными словами - должно пройти с цензурой"
+    },
+    {
+      "message_id": "msg-004",
+      "sender_id": "troll",
+      "receiver_id": "bob",
+      "content": "Троллинг контент",
+      "timestamp": 1725091600.0,
+      "description": "Сообщение от заблокированного troll для bob - должно быть заблокировано"
+    },
+    {
+      "message_id": "msg-005",
+      "sender_id": "dave",
+      "receiver_id": "eve",
+      "content": "Нормальное сообщение без запрещённых слов",
+      "timestamp": 1725091700.0,
+      "description": "Сообщение без блокировок и цензуры"
+    },
+    {
+      "message_id": "msg-006",
+      "sender_id": "frank",
+      "receiver_id": "grace",
+      "content": "Содержит spam и scam одновременно",
+      "timestamp": 1725091800.0,
+      "description": "Сообщение с несколькими запрещёнными словами"
+    },
+    {
+      "message_id": "msg-007",
+      "sender_id": "charlie",
+      "receiver_id": "alice",
+      "content": "Это  сообщение с very badword словом",
+      "timestamp": 1725091500.0,
+      "description": "Сообщение с запрещёнными словами - должно пройти с цензурой"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+faust-streaming-rocksdb
+faust-streaming
+rocksdict
+kafka-python
