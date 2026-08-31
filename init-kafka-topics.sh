@@ -17,7 +17,7 @@ echo ""
 echo "Ожидание Kafka..."
 for i in $(seq 1 30); do
     if kafka-topics --bootstrap-server "$BOOTSTRAP_SERVER" --list > /dev/null 2>&1; then
-        echo "Kafka доступна"
+        echo "✓ Kafka доступна"
         break
     fi
     echo "  Попытка $i/30..."
@@ -47,3 +47,16 @@ echo "========================================"
 echo ""
 echo "Созданные топики:"
 kafka-topics --bootstrap-server "$BOOTSTRAP_SERVER" --list | grep -E "^(messages|filtered_messages|blocked_users|censored_words)$"
+
+echo ""
+echo "Детали топиков:"
+for topic in messages filtered_messages blocked_users censored_words; do
+    echo ""
+    echo "--- $topic ---"
+    kafka-topics --bootstrap-server "$BOOTSTRAP_SERVER" --describe --topic "$topic"
+done
+
+echo ""
+echo "========================================"
+echo "✓ Инициализация завершена успешно"
+echo "========================================"
