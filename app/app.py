@@ -6,7 +6,8 @@ import re
 import os
 
 # Получаем адрес Kafka broker из переменных окружения
-KAFKA_BROKER = os.getenv('KAFKA_BROKER', 'kafka:9092')
+KAFKA_BROKER = os.getenv('KAFKA_BROKER', 'kafka1:9092')
+
 
 # Создаём приложение Faust
 app = App(
@@ -17,7 +18,6 @@ app = App(
     autodiscover=True,
     topic_partitions=8,
 )
-
 
 class Message(Record):
     message_id: str # message_id: Уникальный идентификатор сообщения
@@ -78,10 +78,9 @@ censored_words_topic = app.topic(
 
 
 # Таблица заблокированных пользователей для каждого пользователя
-# Ключ: user_id (кто блокирует), Значение: set blocked_user_ids
 blocked_users_table = app.Table(
     'blocked_users_store',
-    default=set,
+    default=list,
 )
 
 # Таблица запрещённых слов
@@ -99,16 +98,21 @@ async def process_blocked_users(blocked_stream):
         blocked_id = blocked_user.blocked_user_id
         
         # Получаем текущий список заблокированных для пользователя
-        user_blocked_set = blocked_users_table[user_id]
+        user_blocked_list = blocked_users_table[user_id]
         
-        # Добавляем блокируемого пользователя в set
-        user_blocked_set.add(blocked_id)
+        if not isinstance(user_blocked_list, list):
+            user_blocked_list = list(user_blocked_list) if user_blocked_list else []
         
-        # Сохраняем обновлённый set
-        blocked_users_table[user_id] = user_blocked_set
+        # Добавляем блокируемого пользователя, если ещё не заблокирован
+        if blocked_id not in user_blocked_list:
+            user_blocked_list.append(blocked_id)
+        
+        # Сохраняем обновлённый список
+        blocked_users_table[user_id] = user_blocked_list
         
         print(f"[BLOCK] Пользователь {user_id} заблокировал {blocked_id}")
-        print(f"[BLOCK] Текущий список заблокированных {user_id}: {user_blocked_set}")
+        print(f"[BLOCK] Текущий список заблокированных {user_id}: {user_blocked_list}")
+
 
 
 @app.agent(censored_words_topic)
@@ -144,10 +148,14 @@ async def filter_messages(message_stream):
         filtered_content = content
         
         # Получаем список заблокированных пользователей для получателя
-        receiver_blocked_set = blocked_users_table.get(receiver_id, set())
+        receiver_blocked_list = blocked_users_table.get(receiver_id, [])
+        
+        # ИСПРАВЛЕНИЕ: проверяем тип и работаем с list
+        if not isinstance(receiver_blocked_list, list):
+            receiver_blocked_list = list(receiver_blocked_list) if receiver_blocked_list else []
         
         # Проверяем, заблокирован ли отправитель
-        if sender_id in receiver_blocked_set:
+        if sender_id in receiver_blocked_list:
             is_blocked = True
             blocked_reason = f"Пользователь {sender_id} заблокирован получателем {receiver_id}"
             print(f"[FILTER] Сообщение {message_id} заблокировано: {blocked_reason}")
@@ -193,8 +201,13 @@ async def filter_messages(message_stream):
         print(f"[FILTER] Сообщение {message_id} [{status}]: {content[:50]}... -> {filtered_content[:50]}...")
 
 
-def get_blocked_users_for_user(user_id: str) -> Set[str]:
-    return blocked_users_table.get(user_id, set())
+
+def get_blocked_users_for_user(user_id: str) -> List[str]:
+    result = blocked_users_table.get(user_id, [])
+    if not isinstance(result, list):
+        return list(result) if result else []
+    return result
+
 
 
 def add_blocked_user(user_id: str, blocked_user_id: str, timestamp: float):
@@ -206,6 +219,7 @@ def add_blocked_user(user_id: str, blocked_user_id: str, timestamp: float):
     blocked_users_topic.send_sync(value=blocked_user)
 
 
+
 def add_censored_word(word: str, replacement: str = "***", is_active: bool = True):
     censored_word = CensoredWord(
         word=word,
@@ -213,6 +227,7 @@ def add_censored_word(word: str, replacement: str = "***", is_active: bool = Tru
         is_active=is_active,
     )
     censored_words_topic.send_sync(value=censored_word)
+
 
 if __name__ == '__main__':
     app.main()
