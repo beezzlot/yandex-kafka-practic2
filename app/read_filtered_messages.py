@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+# Часть кода с бизнес-логикой реализована через ИИ 
 import json
 from kafka import KafkaConsumer
 from kafka.errors import KafkaError
@@ -40,7 +42,7 @@ def format_message(msg):
     value = msg.value
     
     # Статус
-    status = "ЗАБЛОКИРОВАНО" if value.get('is_blocked', False) else "✅ ПРОПУЩЕНО"
+    status = "ЗАБЛОКИРОВАНО" if value.get('is_blocked', False) else "ПРОПУЩЕНО"
     
     # Цензура
     censored = value.get('censored_words', [])

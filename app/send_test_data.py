@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+# Часть кода с бизнес-логикой реализована через ИИ 
 import json
 import time
 from kafka import KafkaProducer
